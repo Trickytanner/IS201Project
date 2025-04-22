@@ -1,0 +1,43 @@
+body{
+    font-family:"adorn serif", georgia, 'times new roman';
+    background-color: aliceblue;
+    color: black;
+    /* background-image: ; */
+    background-repeat: no-repeat;
+    background-size: cover;
+    font-size: 30px;
+    background-image:url("https://www.snexplores.org/wp-content/uploads/2022/03/1440_Matterhorn_feat.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+a{
+    color: black;
+    position: relative;
+    padding-bottom: 20px;
+}
+
+h1{
+   text-align: center;
+   font-family: 'adorn serif', 'times new roman';
+  
+}
+.header{
+    position:fixed;
+    top: 50px;
+    right: 50px;
+}
+
+.header:hover{
+    color: rgb(110, 110, 110);
+}
+
+h2,h3{
+    font-size: larger;
+}
+.ski-list{
+    position: absolute;
+    top: 10%;
+    right: 25%;
+    padding: 20px;
+}

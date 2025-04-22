@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ski Trivia Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Simple transition for feedback */
+        .feedback {
+            transition: opacity 0.5s ease-in-out;
+        }
+        /* Style for the beanie icon */
+        .beanie-icon {
+            width: 32px; /* Adjust size as needed */
+            height: 32px;
+            fill: #60a5fa; /* blue-400 */
+            margin: 0 4px; /* Add some spacing */
+        }
+        /* Style for message box */
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            z-index: 50;
+            text-align: center;
+        }
+        .message-box-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+        }
+    </style>
+</head>
+<body class="bg-blue-100 min-h-screen flex items-center justify-center p-4">
+
+    <div id="game-container" class="bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-xl text-center">
+
+        <h1 class="text-2xl md:text-3xl font-bold text-blue-600 mb-4">Ski Trivia Challenge!</h1>
+
+        <div class="flex justify-between items-center mb-6">
+            <div id="lives-container" class="flex items-center">
+                <span class="font-semibold mr-2">Lives:</span>
+                </div>
+            <div id="score-container">
+                <span class="font-semibold">Score: </span>
+                <span id="score" class="font-bold text-lg">0</span>
+            </div>
+        </div>
+
+        <div id="question-area" class="mb-6">
+            <p id="question-text" class="text-lg md:text-xl font-medium text-gray-700 min-h-[3em]">Loading question...</p>
+        </div>
+
+        <div id="answers-area" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+            </div>
+
+        <div id="feedback-area" class="min-h-[2em] mb-4">
+            <p id="feedback-text" class="text-lg font-semibold feedback opacity-0"></p>
+        </div>
+
+        <button id="restart-button" class="hidden mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition duration-200 ease-in-out">
+            Play Again?
+        </button>
+
+    </div>
+
+    <div id="message-box-backdrop" class="message-box-backdrop hidden"></div>
+    <div id="message-box" class="message-box hidden">
+        <p id="message-text" class="mb-4 text-lg"></p>
+        <button id="message-close-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg">
+            OK
+        </button>
+    </div>
+
+    <svg width="0" height="0" style="position:absolute">
+      <defs>
+        <symbol id="beanie-svg" viewBox="0 0 24 24">
+          <path d="M19.5 11.5c0-3.87-3.13-7-7-7s-7 3.13-7 7c0 1.68.6 3.22 1.59 4.45L6 21h12l-.91-5.05A6.93 6.93 0 0 0 19.5 11.5zM12 6.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+        </symbol>
+      </defs>
+    </svg>
+
+    <script>
+        // --- DOM Elements ---
+        const gameContainer = document.getElementById('game-container');
+        const livesContainer = document.getElementById('lives-container');
+        const scoreElement = document.getElementById('score');
+        const questionTextElement = document.getElementById('question-text');
+        const answersArea = document.getElementById('answers-area');
+        const feedbackTextElement = document.getElementById('feedback-text');
+        const restartButton = document.getElementById('restart-button');
+        const messageBoxBackdrop = document.getElementById('message-box-backdrop');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+        const messageCloseButton = document.getElementById('message-close-button');
+
+        // --- Game Questions ---
+        const questions = [
+            {
+                question: "What does a 'Green Circle' ski run signify?",
+                answers: ["Expert Only", "Intermediate", "Easiest", "Terrain Park"],
+                correctAnswerIndex: 2
+            },
+            {
+                question: "Which company makes the popular 'Mindbender' ski series?",
+                answers: ["Rossignol", "Salomon", "Atomic", "K2"],
+                correctAnswerIndex: 3
+            },
+            {
+                question: "What does 'Après-ski' refer to?",
+                answers: ["A type of ski binding", "Early morning skiing", "Social activities after skiing", "A ski waxing technique"],
+                correctAnswerIndex: 2
+            },
+            {
+                question: "What shape signifies an 'Expert Only' ski run?",
+                answers: ["Blue Square", "Green Circle", "Black Diamond", "Double Black Diamond"],
+                correctAnswerIndex: 3
+            },
+            {
+                question: "Which country is St. Anton, a famous ski resort, located in?",
+                answers: ["Switzerland", "France", "Austria", "Italy"],
+                correctAnswerIndex: 2
+            },
+            {
+                question: "What piece of equipment protects your eyes from sun and snow?",
+                answers: ["Helmet", "Goggles", "Balaclava", "Scarf"],
+                correctAnswerIndex: 1
+            },
+            {
+                question: "What is the term for skiing on ungroomed, natural snow?",
+                answers: ["Groomer Skiing", "Powder Skiing", "Carving", "Slalom"],
+                correctAnswerIndex: 1
+            },
+             {
+                question: "What does the term 'Blue Square' indicate on a ski trail map?",
+                answers: ["Easiest", "Intermediate", "Advanced", "Experts Only"],
+                correctAnswerIndex: 1
+            },
+            {
+                question: "What is a 'mogul' in skiing?",
+                answers: ["A type of ski pole", "A chairlift", "A bump or mound of snow", "A ski boot brand"],
+                correctAnswerIndex: 2
+            },
+            {
+                question: "Which of these is NOT typically considered a major ski brand?",
+                answers: ["Volkl", "Head", "Burton", "Fischer"],
+                correctAnswerIndex: 2 // Burton is primarily snowboarding
+            }
+        ];
+
+        // --- Game State ---
+        let score = 0;
+        let lives = 3;
+        let currentQuestionIndex = 0;
+        let questionsOrder = []; // To shuffle questions
+
+        // --- Functions ---
+
+        /**
+         * Shuffles an array in place.
+         * @param {Array} array The array to shuffle.
+         */
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+            }
+        }
+
+        /**
+         * Displays a custom message box.
+         * @param {string} message The message to display.
+         */
+        function showMessage(message) {
+            messageText.textContent = message;
+            messageBox.classList.remove('hidden');
+            messageBoxBackdrop.classList.remove('hidden');
+        }
+
+        /**
+         * Hides the custom message box.
+         */
+        function hideMessage() {
+            messageBox.classList.add('hidden');
+            messageBoxBackdrop.classList.add('hidden');
+        }
+
+
+        /**
+         * Updates the displayed score.
+         */
+        function updateScoreDisplay() {
+            scoreElement.textContent = score;
+        }
+
+        /**
+         * Updates the displayed lives (beanie icons).
+         */
+        function updateLivesDisplay() {
+            livesContainer.innerHTML = '<span class="font-semibold mr-2">Lives:</span>'; // Reset container
+            for (let i = 0; i < lives; i++) {
+                // Create SVG instance from definition
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svg.setAttribute("class", "beanie-icon");
+                const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+                use.setAttributeNS("http://www.w3.org/1999/xlink", "href", "#beanie-svg");
+                svg.appendChild(use);
+                livesContainer.appendChild(svg);
+            }
+             // Add placeholders for lost lives if needed for spacing, or just show current count
+            // Example: Adding grayed-out icons for lost lives (optional)
+            // for (let i = lives; i < 3; i++) {
+            //     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            //     svg.setAttribute("class", "beanie-icon opacity-30"); // Grayed out
+            //     const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+            //     use.setAttributeNS("http://www.w3.org/1999/xlink", "href", "#beanie-svg");
+            //     svg.appendChild(use);
+            //     livesContainer.appendChild(svg);
+            // }
+        }
+
+        /**
+         * Displays feedback to the user (Correct/Incorrect).
+         * @param {string} text The feedback message.
+         * @param {boolean} isCorrect Whether the answer was correct.
+         */
+        function showFeedback(text, isCorrect) {
+            feedbackTextElement.textContent = text;
+            feedbackTextElement.className = `text-lg font-semibold feedback ${isCorrect ? 'text-green-600' : 'text-red-600'}`;
+            feedbackTextElement.style.opacity = 1; // Make visible
+
+            // Hide feedback after a delay
+            setTimeout(() => {
+                feedbackTextElement.style.opacity = 0;
+            }, 1500); // Hide after 1.5 seconds
+        }
+
+        /**
+         * Displays the current question and its answer options.
+         */
+        function displayQuestion() {
+            // Clear previous answers and feedback
+            answersArea.innerHTML = '';
+            feedbackTextElement.style.opacity = 0; // Hide feedback immediately
+
+            // Check if game ended (no more questions or no more lives)
+            if (currentQuestionIndex >= questionsOrder.length || lives <= 0) {
+                gameOver();
+                return;
+            }
+
+            // Get the current question based on the shuffled order
+            const questionData = questions[questionsOrder[currentQuestionIndex]];
+            questionTextElement.textContent = questionData.question;
+
+            // Create and append answer buttons
+            questionData.answers.forEach((answer, index) => {
+                const button = document.createElement('button');
+                button.textContent = answer;
+                button.classList.add(
+                    'bg-blue-500', 'hover:bg-blue-600', 'text-white',
+                    'font-medium', 'py-3', 'px-4', 'rounded-lg', 'transition',
+                    'duration-200', 'ease-in-out', 'shadow'
+                 );
+                button.dataset.answerIndex = index; // Store the index on the button
+                button.addEventListener('click', handleAnswer);
+                answersArea.appendChild(button);
+            });
+        }
+
+        /**
+         * Handles the user clicking an answer button.
+         * @param {Event} event The click event object.
+         */
+        function handleAnswer(event) {
+            const selectedButton = event.target;
+            const selectedAnswerIndex = parseInt(selectedButton.dataset.answerIndex);
+            const questionData = questions[questionsOrder[currentQuestionIndex]];
+            const correctAnswerIndex = questionData.correctAnswerIndex;
+
+            // Disable buttons after selection
+            disableAnswerButtons();
+
+            if (selectedAnswerIndex === correctAnswerIndex) {
+                // Correct Answer
+                score += 10; // Award points
+                updateScoreDisplay();
+                showFeedback("Correct!", true);
+                selectedButton.classList.replace('bg-blue-500', 'bg-green-500'); // Highlight correct
+                selectedButton.classList.replace('hover:bg-blue-600', 'hover:bg-green-600');
+            } else {
+                // Incorrect Answer
+                lives--;
+                updateLivesDisplay();
+                showFeedback("Incorrect!", false);
+                selectedButton.classList.replace('bg-blue-500', 'bg-red-500'); // Highlight incorrect
+                selectedButton.classList.replace('hover:bg-blue-600', 'hover:bg-red-600');
+
+                // Highlight the correct answer as well
+                const correctButton = answersArea.querySelector(`[data-answer-index="${correctAnswerIndex}"]`);
+                if (correctButton) {
+                     correctButton.classList.replace('bg-blue-500', 'bg-green-500');
+                     correctButton.classList.replace('hover:bg-blue-600', 'hover:bg-green-600');
+                }
+
+                if (lives <= 0) {
+                    // Use timeout to allow feedback before game over
+                    setTimeout(gameOver, 1600); // Wait slightly longer than feedback display
+                    return; // Stop further execution in this path
+                }
+            }
+
+            // Move to the next question after a delay
+            currentQuestionIndex++;
+            setTimeout(displayQuestion, 1600); // Wait slightly longer than feedback display
+        }
+
+        /**
+         * Disables all answer buttons to prevent multiple clicks.
+         */
+        function disableAnswerButtons() {
+            const buttons = answersArea.querySelectorAll('button');
+            buttons.forEach(button => {
+                button.disabled = true;
+                button.classList.add('opacity-70', 'cursor-not-allowed');
+                // Remove hover effect visually when disabled
+                 button.classList.remove('hover:bg-blue-600', 'hover:bg-green-600', 'hover:bg-red-600');
+            });
+        }
+
+        /**
+         * Ends the game, displays the final score and shows the restart button.
+         */
+        function gameOver() {
+            answersArea.innerHTML = ''; // Clear answer buttons
+            questionTextElement.textContent = lives <= 0 ? "Game Over! You ran out of lives." : "Trivia Complete!";
+
+            // Show final score message using the custom message box
+            showMessage(`Game Finished!\nYour final score is: ${score}`);
+
+            restartButton.classList.remove('hidden'); // Show restart button
+        }
+
+        /**
+         * Initializes or restarts the game.
+         */
+        function initGame() {
+            score = 0;
+            lives = 3;
+            currentQuestionIndex = 0;
+            // Create a shuffled order of question indices
+            questionsOrder = Array.from(questions.keys()); // [0, 1, 2, ..., n-1]
+            shuffleArray(questionsOrder);
+
+            updateScoreDisplay();
+            updateLivesDisplay();
+            restartButton.classList.add('hidden'); // Hide restart button
+            hideMessage(); // Ensure message box is hidden
+
+            // Enable buttons in case they were disabled from a previous game
+            answersArea.innerHTML = ''; // Clear just in case
+
+            displayQuestion(); // Start the first question
+        }
+
+        // --- Event Listeners ---
+        restartButton.addEventListener('click', initGame);
+        messageCloseButton.addEventListener('click', hideMessage);
+
+        // --- Initial Game Start ---
+        window.onload = initGame; // Start the game when the page loads
+
+    </script>
+
+</body>
+</html>
